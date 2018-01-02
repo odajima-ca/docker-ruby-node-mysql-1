@@ -1,15 +1,25 @@
-FROM ruby:2.4.1
+FROM ruby:2.4.3
 
 ENV LANG C.UTF-8
+ENV TZ Asia/Tokyo
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
-    apt-get update -qq && \
-    apt-get install -y build-essential \
-                       nodejs \
-                       mysql-client \
-                       libmysqlclient-dev \
-                       --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libmysqlclient-dev \
+        mysql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN gem install bundler
-RUN npm install -g yarn
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        nodejs \
+        yarn \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN bundle config --global disable_version_check true \
+    && bundle config --global build.nokogiri --use-system-libraries \
+    && bundle config --global jobs 4
+
+WORKDIR /app
